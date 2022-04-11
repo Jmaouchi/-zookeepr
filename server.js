@@ -1,40 +1,19 @@
 const express = require('express');
 const { animals } = require('./data/animals');
+
 const PORT = process.env.PORT || 3001;
-//instantiate the server
 const app = express();
 
-app.get('/api/animals', (req, res) => {
-  let results = animals;
-  console.log(req.query)
-  results = filterByQuery(req.query, results);
-  res.json(results);
-});
-
-
-// filter by query function 
 function filterByQuery(query, animalsArray) {
   let personalityTraitsArray = [];
-  // Note that we save the animalsArray as filteredResults here:
-  let filteredResults = animalsArray; // the annimalArray is the data that we have set in animals.json
-  console.log(filteredResults);
-  if (query.personalityTraits){
-    // Save personalityTraits as a dedicated array.
-    // If personalityTraits is a string, place it into a new array and save.
+  let filteredResults = animalsArray;
+  if (query.personalityTraits) {
     if (typeof query.personalityTraits === 'string') {
       personalityTraitsArray = [query.personalityTraits];
     } else {
       personalityTraitsArray = query.personalityTraits;
     }
-    // Loop through each trait in the personalityTraits array:
     personalityTraitsArray.forEach(trait => {
-      // Check the trait against each animal in the filteredResults array.
-      // Remember, it is initially a copy of the animalsArray,
-      // but here we're updating it for each trait in the .forEach() loop.
-      // For each trait being targeted by the filter, the filteredResults
-      // array will then contain only the entries that contain the trait,
-      // so at the end we'll have an array of animals that have every one 
-      // of the traits when the .forEach() loop is finished.
       filteredResults = filteredResults.filter(
         animal => animal.personalityTraits.indexOf(trait) !== -1
       );
@@ -49,10 +28,30 @@ function filterByQuery(query, animalsArray) {
   if (query.name) {
     filteredResults = filteredResults.filter(animal => animal.name === query.name);
   }
-  // return the filtered results:
   return filteredResults;
 }
 
+function findById(id, animalsArray) {
+  const result = animalsArray.filter(animal => animal.id === id)[0];
+  return result;
+}
+
+app.get('/api/animals', (req, res) => {
+  let results = animals;
+  if (req.query) {
+    results = filterByQuery(req.query, results);
+  }
+  res.json(results);
+});
+
+app.get('/api/animals/:id', (req, res) => {
+  const result = findById(req.params.id, animals);
+  if (result) {
+    res.json(result);
+  } else {
+    res.send(404);
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`API server now on port ${PORT}!`);
