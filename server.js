@@ -1,9 +1,11 @@
+// file system package 
 const fs = require('fs');
+//path package 
 const path = require('path');
 const express = require('express');
 const { animals } = require('./data/animals');
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 const app = express();
 
 // parse incoming string or array data (it will parse any data that is coming from the outside of the server)
@@ -11,6 +13,9 @@ app.use(express.urlencoded({ extended: true }));
 // parse incoming JSON data
 app.use(express.json()) // The express.json() method we used takes incoming POST data in the form of JSON and parses it into the req.body JavaScript object
 
+//The way the express.static works is that we provide a file path to a location in our application (in this case, 
+//the public folder) and instruct the server to make these files static resources.e 
+app.use(express.static('public'));
 
 function filterByQuery(query, animalsArray) {
 
@@ -68,23 +73,29 @@ function createNewAnimal(body, animalsArray){//the body is the data we are posti
   animalsArray.push(animal);
   fs.writeFileSync(
     path.join(__dirname, './data/animals.json'),//__dirname which represents the directory of the file we execute the code in, with the path to the animals.json file.
-    // this is to save the poster data array to a json formating, to add it to the 
+    // this is to save the posted data array to a json  
     JSON.stringify({ animals: animalsArray }, null, 2)//The null argument means we don't want to edit any of our existing data; if we did, 
     //we could pass something in there. The 2 indicates we want to create white space between our values to make it more readable
   );
   return animal;
 }
 
+
+//this function will retun a false whenever the data posted is not formated correctly
 function validateAnimal(animal) {
+  //if the animal name is empty or its not inside of a string then return a false 
   if (!animal.name || typeof animal.name !== 'string') {
     return false;
   }
+  //if the animal species is empty or its not inside of a string then return a false 
   if (!animal.species || typeof animal.species !== 'string') {
     return false;
   }
+  //if the animal diet is empty or its not inside of a string then return a false 
   if (!animal.diet || typeof animal.diet !== 'string') {
     return false;
   }
+  //if the animal personanlityTraits is empty or its not inside of an array then return a false 
   if (!animal.personalityTraits || !Array.isArray(animal.personalityTraits)) {
     return false;
   }
@@ -118,13 +129,13 @@ app.get('/api/animals/:id', (req, res) => { //get is a route of the app method
   }
 });
 
-
+// all routes that has the term api in it will deal in transference of JSON data,
 app.post('/api/animals', (req, res) => {
   // set id based on what the next index of the array will be
   req.body.id = animals.length.toString();
 
-  // if any data in req.body is incorrect, send 400 error back
-  if (!validateAnimal(req.body)) {
+  // if any data in req.body is false, send 400 error back
+  if (!validateAnimal(req.body)){
     res.status(400).send('The animal is not properly formatted.'); // this status send is for the client to tell them what happen and whats missing
     // everthing that is 400 range means that its the user error and not the server
   } else {
@@ -133,6 +144,27 @@ app.post('/api/animals', (req, res) => {
   }
 });
 
+
+// if the visited url is / then send the index.html file template 
+// also the endoint that doesnt have api on, means that it shoud serve to send html pages
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, './public/index.html'));
+});
+
+//  if the visited url is /animals then send the animals.html file template
+app.get('/animals', (req, res) => {
+  res.sendFile(path.join(__dirname, './public/animals.html'));
+});
+
+//  if the visited url is /zookeeper then send the zookeeper.html file template
+app.get('/zookeepers', (req, res) => {
+  res.sendFile(path.join(__dirname, './public/zookeepers.html'));
+});
+
+// if the visited url has a wrong endpoint then send them back the index.html page 
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, './public/index.html'));
+});
 
 
 app.listen(PORT, () => {
