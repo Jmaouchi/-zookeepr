@@ -1,172 +1,26 @@
-// file system package 
-const fs = require('fs');
-//path package 
-const path = require('path');
 const express = require('express');
-const { animals } = require('./data/animals');
+// set a port number for the server 
+const PORT = process.env.PORT || 3001;
 
-const PORT = process.env.PORT || 3000;
+// require data from routes/apiRoutes
+const apiRoutes = require('./routes/apiRoutes');
+// require data from routes/html routes
+const htmlRoutes = require('./routes/htmlRoutes');
+
 const app = express();
-
 // parse incoming string or array data (it will parse any data that is coming from the outside of the server)
 app.use(express.urlencoded({ extended: true }));
 // parse incoming JSON data
 app.use(express.json()) // The express.json() method we used takes incoming POST data in the form of JSON and parses it into the req.body JavaScript object
-
 //The way the express.static works is that we provide a file path to a location in our application (in this case, 
-//the public folder) and instruct the server to make these files static resources.e 
+//the public folder) and instruct the server to make these files static resources.e so like html can use style.css realated to it and javascript related to it 
 app.use(express.static('public'));
+// if the user the apiRoutes as a url call that url + api behind the url ( this to send them json data )
+app.use('/api', apiRoutes);
+// if the user the htmlRouts as a url call that url with only / behind the url ( this to send them jhtml templets )
+app.use('/', htmlRoutes);
 
-function filterByQuery(query, animalsArray) {
-
-  let personalityTraitsArray = [];
-
-  // Note that we save the animalsArray as filteredResults here:
-  let filteredResults = animalsArray;
-
-  if (query.personalityTraits) {
-    // Save personalityTraits as a dedicated array.
-    // If personalityTraits is a string, place it into a new array and save.
-    if (typeof query.personalityTraits === 'string') {
-      //if the data inside the traits is a string then transfer it to an array 
-      // and with that we can loop through the array and get the values 
-      personalityTraitsArray = [query.personalityTraits];
-    } else {
-      personalityTraitsArray = query.personalityTraits;
-    }
-    personalityTraitsArray.forEach(trait => {
-      // Check the trait against each animal in the filteredResults array.
-      // Remember, it is initially a copy of the animalsArray,
-      // but here we're updating it for each trait in the .forEach() loop.
-      // For each trait being targeted by the filter, the filteredResults
-      // array will then contain only the entries that contain the trait,
-      // so at the end we'll have an array of animals that have every one 
-      // of the traits when the .forEach() loop is finished.
-      filteredResults = filteredResults.filter( //or data.filter
-        animal => animal.personalityTraits.indexOf(trait) !== -1
-      );
-    });
-  }
-  if (query.diet) {
-    filteredResults = filteredResults.filter(animal => animal.diet === query.diet);
-  }
-  if (query.species) {
-    filteredResults = filteredResults.filter(animal => animal.species === query.species);
-  }
-  if (query.name) {
-    filteredResults = filteredResults.filter(animal => animal.name === query.name);
-  }
-
-  //and then it will return the filtred result 
-  return filteredResults;
-}
-
-function findById(id, animalsArray) {
-  // this will filter thru the animal data and search for a specific animal id and return the resul using the animal id 
-  const result = animalsArray.filter(animal => animal.id === id)[0];
-  return result;
-}
-
-// this is for the post method
-function createNewAnimal(body, animalsArray){//the body is the data we are posting and animalsArray is where we are posting it to
-  const animal = body;
-  animalsArray.push(animal);
-  fs.writeFileSync(
-    path.join(__dirname, './data/animals.json'),//__dirname which represents the directory of the file we execute the code in, with the path to the animals.json file.
-    // this is to save the posted data array to a json  
-    JSON.stringify({ animals: animalsArray }, null, 2)//The null argument means we don't want to edit any of our existing data; if we did, 
-    //we could pass something in there. The 2 indicates we want to create white space between our values to make it more readable
-  );
-  return animal;
-}
-
-
-//this function will retun a false whenever the data posted is not formated correctly
-function validateAnimal(animal) {
-  //if the animal name is empty or its not inside of a string then return a false 
-  if (!animal.name || typeof animal.name !== 'string') {
-    return false;
-  }
-  //if the animal species is empty or its not inside of a string then return a false 
-  if (!animal.species || typeof animal.species !== 'string') {
-    return false;
-  }
-  //if the animal diet is empty or its not inside of a string then return a false 
-  if (!animal.diet || typeof animal.diet !== 'string') {
-    return false;
-  }
-  //if the animal personanlityTraits is empty or its not inside of an array then return a false 
-  if (!animal.personalityTraits || !Array.isArray(animal.personalityTraits)) {
-    return false;
-  }
-  return true;
-}
-
-
-// first root to animals endpoint or first role for getting data from the server 
-app.get('/api/animals', (req, res) => {
-  let results = animals;
-  // the req.query = url/query or it will add that query to thd end of the url
-  if (req.query) {
-    // if they provide a query parametre than call this function 
-    results = filterByQuery(req.query, results);
-  }
-  // if there is no query provided than return the whole data as json 
-  res.json(results);
-
-});
-
-
-
-// second root to animals endpoint or second role for getting data from the server 
-app.get('/api/animals/:id', (req, res) => { //get is a route of the app method 
-  // the req.params = url/params or it will add that param to thd end of the url
-  const result = findById(req.params.id, animals);
-  if (result) {
-    res.json(result);
-  } else {
-    res.send(404);
-  }
-});
-
-// all routes that has the term api in it will deal in transference of JSON data,
-app.post('/api/animals', (req, res) => {
-  // set id based on what the next index of the array will be
-  req.body.id = animals.length.toString();
-
-  // if any data in req.body is false, send 400 error back
-  if (!validateAnimal(req.body)){
-    res.status(400).send('The animal is not properly formatted.'); // this status send is for the client to tell them what happen and whats missing
-    // everthing that is 400 range means that its the user error and not the server
-  } else {
-    const animal = createNewAnimal(req.body, animals);
-    res.json(animal);
-  }
-});
-
-
-// if the visited url is / then send the index.html file template 
-// also the endoint that doesnt have api on, means that it shoud serve to send html pages
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, './public/index.html'));
-});
-
-//  if the visited url is /animals then send the animals.html file template
-app.get('/animals', (req, res) => {
-  res.sendFile(path.join(__dirname, './public/animals.html'));
-});
-
-//  if the visited url is /zookeeper then send the zookeeper.html file template
-app.get('/zookeepers', (req, res) => {
-  res.sendFile(path.join(__dirname, './public/zookeepers.html'));
-});
-
-// if the visited url has a wrong endpoint then send them back the index.html page 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, './public/index.html'));
-});
-
-
+// this is to start listening to the server 
 app.listen(PORT, () => {
   console.log(`API server now on port ${PORT}!`);
 });

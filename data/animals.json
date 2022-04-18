@@ -248,6 +248,24 @@
         "zany"
       ],
       "id": "26"
+    },
+    {
+      "name": "sdad",
+      "species": "asdasd",
+      "diet": "folivore",
+      "personalityTraits": [
+        "hungry"
+      ],
+      "id": "27"
+    },
+    {
+      "name": "sdad",
+      "species": "asd",
+      "diet": "folivore",
+      "personalityTraits": [
+        "hungry"
+      ],
+      "id": "28"
     }
   ]
 }
