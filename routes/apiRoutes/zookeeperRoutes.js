@@ -35,4 +35,18 @@ router.get('/zookeepers/:id', (req, res) => { //get is a route of the app method
 });
 
 
+// post data to add a zookeeper 
+router.post('/zookeepers', (req, res) => {
+  req.body.id = zookeepers.length.toString();
+
+  if (!validateZookeeper(req.body)) {
+    res.status(400).send('The zookeeper is not properly formatted.');
+  } else {
+    const zookeeper = createNewZookeeper(req.body, zookeepers);
+    res.json(zookeeper);
+  }
+});
+
+// post route needed 
+
 module.exports = router;
