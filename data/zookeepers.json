@@ -59,6 +59,12 @@
       "age": 64,
       "favoriteAnimal": "Rabbit",
       "id": "9"
+    },
+    {
+      "name": "Jugurta",
+      "age": 25,
+      "favoriteAnimal": "ddas",
+      "id": "10"
     }
   ]
 }

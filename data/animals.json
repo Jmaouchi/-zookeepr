@@ -266,6 +266,15 @@
         "hungry"
       ],
       "id": "28"
+    },
+    {
+      "name": "asd",
+      "species": "asdsa",
+      "diet": "carnivore",
+      "personalityTraits": [
+        "zany"
+      ],
+      "id": "29"
     }
   ]
 }
